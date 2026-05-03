@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import type { Canvas } from "@/db/schema";
@@ -61,6 +61,9 @@ export default function DashboardPage() {
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -85,6 +88,45 @@ export default function DashboardPage() {
     });
     const canvas = await res.json();
     router.push(`/canvas/${canvas.id}`);
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportError("");
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+
+      if (parsed.type !== "excalidraw") {
+        setImportError("File bukan format .excalidraw yang valid");
+        return;
+      }
+
+      const title = file.name.replace(/\.excalidraw$/, "");
+      const res = await fetch("/api/canvases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          data: {
+            elements: parsed.elements ?? [],
+            appState: parsed.appState ?? {},
+          },
+        }),
+      });
+
+      const canvas = await res.json();
+      router.push(`/canvas/${canvas.id}`);
+    } catch {
+      setImportError("Gagal membaca file, pastikan format file benar");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   if (status === "loading" || loading) {
@@ -122,17 +164,50 @@ export default function DashboardPage() {
             <h1 className="text-xl font-bold text-neutral-900">My Canvases</h1>
             <p className="text-sm text-neutral-500 mt-0.5">{canvases.length} canvas{canvases.length !== 1 ? "es" : ""}</p>
           </div>
-          <button
-            onClick={handleNewCanvas}
-            disabled={creating}
-            className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-700 transition disabled:opacity-50"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            {creating ? "Creating..." : "New Canvas"}
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".excalidraw"
+              className="hidden"
+              onChange={handleImport}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="flex items-center gap-2 border border-neutral-200 text-neutral-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-50 transition disabled:opacity-50"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+              {importing ? "Importing..." : "Import"}
+            </button>
+            <button
+              onClick={handleNewCanvas}
+              disabled={creating}
+              className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-700 transition disabled:opacity-50"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              {creating ? "Creating..." : "New Canvas"}
+            </button>
+          </div>
         </div>
+
+        {importError && (
+          <div className="mb-6 flex items-center gap-2 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-sm text-red-600">{importError}</p>
+            <button onClick={() => setImportError("")} className="ml-auto text-red-400 hover:text-red-600">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {canvases.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -143,13 +218,21 @@ export default function DashboardPage() {
               </svg>
             </div>
             <p className="text-neutral-600 font-medium">No canvases yet</p>
-            <p className="text-neutral-400 text-sm mt-1">Create your first canvas to get started</p>
-            <button
-              onClick={handleNewCanvas}
-              className="mt-6 bg-neutral-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-neutral-700 transition"
-            >
-              Create canvas
-            </button>
+            <p className="text-neutral-400 text-sm mt-1">Create a new canvas or import an existing .excalidraw file</p>
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="border border-neutral-200 text-neutral-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-neutral-50 transition"
+              >
+                Import file
+              </button>
+              <button
+                onClick={handleNewCanvas}
+                className="bg-neutral-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-neutral-700 transition"
+              >
+                Create canvas
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

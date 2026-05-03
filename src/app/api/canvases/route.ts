@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const [canvas] = await db
     .insert(canvases)
-    .values({ userId: session.user.id, title })
+    .values({ userId: session.user.id, title, data: body.data ?? {} })
     .returning();
 
   return NextResponse.json(canvas, { status: 201 });
