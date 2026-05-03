@@ -115,6 +115,7 @@ export default function DashboardPage() {
           data: {
             elements: parsed.elements ?? [],
             appState: parsed.appState ?? {},
+            files: parsed.files ?? {},
           },
         }),
       });

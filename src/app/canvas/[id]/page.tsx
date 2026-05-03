@@ -23,7 +23,7 @@ export default function CanvasPage() {
   const { id } = useParams<{ id: string }>();
   const [title, setTitle] = useState("Untitled Canvas");
   const [editingTitle, setEditingTitle] = useState(false);
-  const [initialData, setInitialData] = useState<{ elements: readonly ExcalidrawElement[]; appState: Partial<AppState> } | null>(null);
+  const [initialData, setInitialData] = useState<{ elements: readonly ExcalidrawElement[]; appState: Partial<AppState>; files: BinaryFiles } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(true);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,27 +45,28 @@ export default function CanvasPage() {
         setInitialData({
           elements: data.data?.elements ?? [],
           appState: data.data?.appState ?? {},
+          files: data.data?.files ?? {},
         });
         setLoading(false);
       });
   }, [id, status, router]);
 
   const save = useCallback(
-    async (elements: readonly ExcalidrawElement[], appState: AppState) => {
+    async (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
       setSaved(false);
       await fetch(`/api/canvases/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: { elements, appState: { theme: appState.theme } } }),
+        body: JSON.stringify({ data: { elements, appState: { theme: appState.theme }, files } }),
       });
       setSaved(true);
     },
     [id]
   );
 
-  function handleChange(elements: readonly ExcalidrawElement[], appState: AppState, _files: BinaryFiles) {
+  function handleChange(elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => save(elements, appState), 1500);
+    saveTimer.current = setTimeout(() => save(elements, appState, files), 1500);
   }
 
   async function handleTitleSave(newTitle: string) {
