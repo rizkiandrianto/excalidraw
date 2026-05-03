@@ -54,10 +54,27 @@ export default function CanvasPage() {
   const save = useCallback(
     async (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
       setSaved(false);
+
+      const hostedFiles: BinaryFiles = {};
+      await Promise.all(
+        Object.entries(files as Record<string, { dataURL: string; mimeType: string }>).map(async ([fileId, fileData]) => {
+          if (fileData.dataURL.startsWith("data:")) {
+            await fetch("/api/files", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: fileId, mimeType: fileData.mimeType, dataURL: fileData.dataURL }),
+            });
+            hostedFiles[fileId] = { ...fileData, dataURL: `/api/files/${fileId}` };
+          } else {
+            hostedFiles[fileId] = fileData;
+          }
+        })
+      );
+
       await fetch(`/api/canvases/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: { elements, appState: { theme: appState.theme }, files } }),
+        body: JSON.stringify({ data: { elements, appState: { theme: appState.theme }, files: hostedFiles } }),
       });
       setSaved(true);
     },

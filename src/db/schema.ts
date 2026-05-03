@@ -60,5 +60,12 @@ export const canvases = pgTable("canvases", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const canvasFiles = pgTable("canvas_files", {
+  id: text("id").primaryKey(),
+  mimeType: text("mime_type").notNull(),
+  data: text("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Canvas = typeof canvases.$inferSelect;

@@ -106,6 +106,21 @@ export default function DashboardPage() {
         return;
       }
 
+      const rawFiles = parsed.files ?? {};
+      const hostedFiles: Record<string, unknown> = {};
+
+      await Promise.all(
+        Object.entries(rawFiles).map(async ([fileId, fileData]) => {
+          const f = fileData as { mimeType: string; dataURL: string; created: number };
+          await fetch("/api/files", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: fileId, mimeType: f.mimeType, dataURL: f.dataURL }),
+          });
+          hostedFiles[fileId] = { ...f, dataURL: `/api/files/${fileId}` };
+        })
+      );
+
       const title = file.name.replace(/\.excalidraw$/, "");
       const res = await fetch("/api/canvases", {
         method: "POST",
@@ -115,7 +130,7 @@ export default function DashboardPage() {
           data: {
             elements: parsed.elements ?? [],
             appState: parsed.appState ?? {},
-            files: parsed.files ?? {},
+            files: hostedFiles,
           },
         }),
       });
