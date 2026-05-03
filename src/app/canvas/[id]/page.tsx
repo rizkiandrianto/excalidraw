@@ -19,6 +19,22 @@ const Excalidraw = dynamic(
   { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center"><div className="w-5 h-5 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin" /></div> }
 );
 
+async function generateThumbnail(elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles): Promise<string | null> {
+  if (elements.length === 0) return null;
+  try {
+    const { exportToBlob } = await import("@excalidraw/excalidraw");
+    const blob = await exportToBlob({ elements, appState, files, exportPadding: 16, maxWidthOrHeight: 400, quality: 0.7 });
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export default function CanvasPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -81,6 +97,21 @@ export default function CanvasPage() {
         body: JSON.stringify({ data: { elements, appState: { theme: appState.theme }, files: hostedFiles } }),
       });
       setSaved(true);
+
+      const schedule = typeof requestIdleCallback !== "undefined"
+        ? (cb: () => void) => requestIdleCallback(cb, { timeout: 5000 })
+        : (cb: () => void) => setTimeout(cb, 200);
+
+      schedule(() => {
+        void generateThumbnail(elements, appState, hostedFiles).then((thumbnail) => {
+          if (!thumbnail) return;
+          fetch(`/api/canvases/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ thumbnail }),
+          });
+        });
+      });
     },
     [id]
   );
