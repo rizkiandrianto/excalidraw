@@ -10,7 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "migrate:files": "node --experimental-strip-types scripts/migrate-files.ts"
+    "migrate:files": "node --experimental-strip-types scripts/migrate-files.mts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
