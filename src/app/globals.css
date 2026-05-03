@@ -32,3 +32,7 @@ input, textarea, select {
 input::placeholder, textarea::placeholder {
   color: #a3a3a3;
 }
+
+button:not(:disabled), input:not(:disabled) {
+  cursor: pointer;
+}
