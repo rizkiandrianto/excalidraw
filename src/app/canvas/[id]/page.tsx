@@ -11,6 +11,8 @@ type ExcalidrawElement = any;
 type AppState = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type BinaryFiles = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ExcalidrawAPI = any;
 
 const Excalidraw = dynamic(
   () => import("@excalidraw/excalidraw").then((m) => m.Excalidraw),
@@ -26,7 +28,9 @@ export default function CanvasPage() {
   const [initialData, setInitialData] = useState<{ elements: readonly ExcalidrawElement[]; appState: Partial<AppState>; files: BinaryFiles } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const excalidrawAPI = useRef<ExcalidrawAPI>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -84,6 +88,51 @@ export default function CanvasPage() {
   function handleChange(elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => save(elements, appState, files), 1500);
+  }
+
+  async function handleExport() {
+    if (!excalidrawAPI.current) return;
+    setExporting(true);
+
+    const elements = excalidrawAPI.current.getSceneElements();
+    const appState = excalidrawAPI.current.getAppState();
+    const files = excalidrawAPI.current.getFiles() as Record<string, { dataURL: string; mimeType: string; created: number }>;
+
+    const exportFiles: Record<string, unknown> = {};
+    await Promise.all(
+      Object.entries(files).map(async ([fileId, fileData]) => {
+        if (!fileData.dataURL.startsWith("data:")) {
+          const res = await fetch(fileData.dataURL);
+          const blob = await res.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          exportFiles[fileId] = { ...fileData, dataURL: base64 };
+        } else {
+          exportFiles[fileId] = fileData;
+        }
+      })
+    );
+
+    const json = JSON.stringify({
+      type: "excalidraw",
+      version: 2,
+      source: window.location.origin,
+      elements,
+      appState: { theme: appState.theme, viewBackgroundColor: appState.viewBackgroundColor },
+      files: exportFiles,
+    });
+
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title}.excalidraw`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExporting(false);
   }
 
   async function handleTitleSave(newTitle: string) {
@@ -144,6 +193,16 @@ export default function CanvasPage() {
           <span className={`text-xs transition ${saved ? "text-neutral-400" : "text-amber-500"}`}>
             {saved ? "Saved" : "Saving..."}
           </span>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 transition disabled:opacity-50 px-2 py-1 rounded hover:bg-neutral-100"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            {exporting ? "Exporting..." : "Export"}
+          </button>
           <span className="text-xs text-neutral-300">{session?.user?.name || session?.user?.email}</span>
         </div>
       </header>
@@ -153,6 +212,7 @@ export default function CanvasPage() {
           <Excalidraw
             initialData={initialData}
             onChange={handleChange}
+            excalidrawAPI={(api) => { excalidrawAPI.current = api; }}
             UIOptions={{ canvasActions: { export: false, loadScene: false } }}
           />
         )}
