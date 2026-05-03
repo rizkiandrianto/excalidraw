@@ -3,11 +3,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-neutral-900 flex-col justify-between p-12">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#171717" strokeWidth="2.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M8 12h8M12 8v8" />
-            </svg>
+          <div className="w-8 h-8 rounded-lg overflow-hidden">
+            <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-white font-semibold text-lg">Canvas</span>
         </div>

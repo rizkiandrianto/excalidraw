@@ -99,11 +99,8 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-neutral-50">
       <header className="bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-neutral-900 rounded-lg flex items-center justify-center">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M8 12h8M12 8v8" />
-            </svg>
+          <div className="w-7 h-7 rounded-lg overflow-hidden">
+            <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <span className="font-semibold text-neutral-900">Canvas</span>
         </div>
