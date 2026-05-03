@@ -1,7 +1,9 @@
-import { config } from "dotenv";
 import pg from "pg";
 
-config({ path: ".env.local" });
+try {
+  const { config } = await import("dotenv");
+  config({ path: ".env.local" });
+} catch {}
 
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
 
