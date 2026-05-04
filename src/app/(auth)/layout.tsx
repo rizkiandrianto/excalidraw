@@ -1,14 +1,11 @@
+import AuthLogo from "@/components/atom/AuthLogo"
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-1/2 bg-sky-600 flex-col justify-between p-12 relative">
         <img src="/auth_bg.png" alt="auth bg" className="absolute w-[50vw] top-1/5 brightness-0 invert left-0" />
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg overflow-hidden">
-            <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-white font-semibold text-lg">Canvas</span>
-        </div>
+        <AuthLogo />
 
         <div>
           <blockquote className="text-white text-xl leading-relaxed">
@@ -18,8 +15,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md">{children}</div>
+      <div className="flex-1 flex items-center pt-[10vh] sm:justify-center gap-16 p-8 bg-white flex-col lg:flex-row">
+        <div className="lg:hidden flex justify-center">
+          <AuthLogo />
+        </div>
+        <div className="w-full max-w-md">
+          {children}
+        </div>
       </div>
     </div>
   );

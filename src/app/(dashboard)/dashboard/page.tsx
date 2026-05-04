@@ -155,27 +155,27 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <header className="bg-white border-b border-neutral-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded-lg overflow-hidden">
             <img src="/favicon.png" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <span className="font-semibold text-neutral-900">Canvas</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-neutral-500">{session?.user?.name || session?.user?.email}</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm text-neutral-500 truncate max-w-[120px] sm:max-w-xs">{session?.user?.name || session?.user?.email}</span>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-sm text-neutral-500 hover:text-neutral-900 transition px-3 py-1.5 rounded-lg hover:bg-neutral-100"
+            className="text-sm text-neutral-500 hover:text-neutral-900 transition px-3 py-1.5 rounded-lg hover:bg-neutral-100 shrink-0"
           >
             Sign out
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <div className="flex flex-col gap-3 mb-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold text-neutral-900">My Canvases</h1>
             <p className="text-sm text-neutral-500 mt-0.5">{canvases.length} canvas{canvases.length !== 1 ? "es" : ""}</p>
@@ -191,7 +191,7 @@ export default function DashboardPage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={importing}
-              className="flex items-center gap-2 border border-neutral-200 text-neutral-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-50 transition disabled:opacity-50"
+              className="flex flex-1 sm:flex-none items-center justify-center gap-2 border border-neutral-200 text-neutral-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-50 transition disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
             <button
               onClick={handleNewCanvas}
               disabled={creating}
-              className="flex items-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-700 transition disabled:opacity-50"
+              className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-700 transition disabled:opacity-50 whitespace-nowrap"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
                 <path d="M12 5v14M5 12h14" />
